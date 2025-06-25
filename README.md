@@ -86,3 +86,6 @@ The endpoints were tested using the built-in HTTP client in PyCharm with the
 - statsmodels~=0.14.4
 - matplotlib~=3.9.4
 - plotly~=6.1.2
+- uvicorn
+- jinja2
+- python-multipart
