@@ -10,8 +10,8 @@ The tool presently uses a SARIMAX model trained on above-mentioned data between 
 ## Getting Started
 1. Clone repository
     ```
-    git clone https://github.com/subhadeep-sg/supplychainintegration.git
-    cd supplychainintegration
+    git clone https://github.com/subhadeep-sg/supply-chain-integration.git
+    cd supply-chain-integration
     ```
 2. Create and activate virtual environment
     ```
@@ -76,6 +76,10 @@ The endpoints were tested using the built-in HTTP client in PyCharm with the
   "target_label": "value_5"      // internal label for a given commodity.
 }
 ```
+
+## Appearance of UI
+
+<img src="figures/forecast_output_template.png" width="300">
 
 ## Requirements
 - fastapi~=0.115.12

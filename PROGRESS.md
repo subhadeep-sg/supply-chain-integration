@@ -163,4 +163,7 @@ With this I think the basic project is working.
 - UI Improvements, Adding success/failure message on submit, descriptions for input fields.
 - Add more models for improvement of forecasting logic, maybe add multiple years of predictions, allow model switching.
 - Storing predictions as a log.
-- Containerize with Docker, deploy on a platform (Render, Heroku etc.)
+- Containerize with Docker, deploy on a platform (Render, Heroku etc.).
+- I've just realized there is another thing I've missed about the forecast prediction. So the dataset is working with 2017
+Dollar value so any prediction will be adjusted to that year, so giving the output for 2022 will involve a conversion
+to display on the user's end.
