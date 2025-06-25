@@ -1,0 +1,24 @@
+# Test your FastAPI endpoints
+
+### Checking root
+GET http://127.0.0.1:8000/
+Accept: application/json
+
+### Checking available options
+
+GET http://127.0.0.1:8000/options
+Accept: application/json
+
+### Test forecast
+POST http://127.0.0.1:8000/forecast
+Content-Type: application/json
+
+{
+  "year": 2022,
+  "target_label": "value for Meat/seafood",
+  "features": {
+    "MEHOINUSGAA672N": 60000,
+    "GARETAILNQGSP": 300000,
+    "Population": 10500000
+  }
+}

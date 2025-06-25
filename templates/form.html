@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Freight Forecast Tool</title>
+</head>
+<body>
+    <h2>Freight Forecast Form</h2>
+    <form action="/submit" method="post">
+        <label for="year">Year:</label><br>
+        <input type="number" id="year" name="year" value="2022"><br><br>
+
+        <label for="target_label">Target Label:</label><br>
+        <select name="target_label" id="target_label">
+            {% for label in forecast_options %}
+                <option value="{{ label }}">{{ label }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="MEHOINUSGAA672N">Median Household Income (GA):</label><br>
+        <input type="number" name="MEHOINUSGAA672N" value="75000"><br><br>
+
+        <label for="GARETAILNQGSP">GDP from Retail Trade (GA):</label><br>
+        <input type="number" name="GARETAILNQGSP" value="205000"><br><br>
+
+        <label for="MEHOINUSGAA672N">Population (GA):</label><br>
+        <input type="number" name="Population" value="10700000"><br><br>
+
+        <input type="submit" value="Get Forecast">
+    </form>
+
+    {% if result %}
+        <h3>Forecast Result:</h3>
+        <p>{{ result }}</p>
+    {% endif %}
+</body>
+</html>
