@@ -145,7 +145,8 @@ def sarimax_model_pipeline(train, valid, target):
                                                 x_pred=valid, y_true=y_valid,
                                                 order=extracted_order)
 
-    row = pd.DataFrame(data={'target': [target], 'p, d, q': [order_string], 'rmse': [rmse], 'mape': [mape]})
+    row = pd.DataFrame(data={'Target': [target], 'p, d, q': [order_string], 'RMSE': [rmse], 'MAPE (%)': [mape],
+                             'Prediction': [pred.iloc[0]], 'Ground Truth': [y_valid.iloc[0]]})
 
     logger.info(f'Returning optimal SARIMAX results and model for {target}...')
     return row, extracted_order
@@ -161,18 +162,16 @@ def sarimax_test_pipeline(train, test, target, model_order):
     test = test.drop(columns=tons_columns + value_columns)
 
     logger.info(f'Starting SARIMAX train...')
-    # results, extracted_order, order_string = grid_search_sarimax(train=train, y_train=y_train, valid=test, y_valid=y_test)
-
     rmse, mape, pred = sarimax_train_prediction(train=train, y_train=y_train,
                                                 x_pred=test, y_true=y_test,
                                                 order=model_order)
 
     row = pd.DataFrame(data={
-        'target': [target],
+        'Target': [target],
         'p, d, q': [model_order],
-        'rmse': [rmse], 'mape': [mape],
-        'prediction': [pred.iloc[0]],
-        'ground_truth': [y_test.iloc[0]]
+        'RMSE': [rmse], 'MAPE (%)': [mape],
+        'Prediction': [pred.iloc[0]],
+        'Ground Truth': [y_test.iloc[0]]
     })
 
     return row
@@ -223,6 +222,7 @@ def main():
     validation_results = pd.concat([value_5_row, tons_5_row, value_8_row, tons_8_row, value_9_row, tons_9_row,
                                     value_21_row, tons_21_row], axis=0)
     logger.debug(f'Validation results: \n{validation_results}')
+    print(validation_results.to_markdown(index=False))
 
     os.makedirs(f'{root_dir}/results/sarimax', exist_ok=True)
     validation_results.to_csv(f'{root_dir}/results/sarimax/sarimax_validation.csv', index=False)

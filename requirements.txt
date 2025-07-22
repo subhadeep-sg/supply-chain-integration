@@ -12,3 +12,5 @@ python-multipart
 python-dotenv
 tabulate
 xgboost
+sqlalchemy
+psycopg2

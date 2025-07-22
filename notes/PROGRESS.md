@@ -191,6 +191,19 @@ reliably and then moving onto XGBoost's predictions for comparison.
 - Learned today about using df.to_markdown as a way to easily make a copy-paste-able markdown version of the table.
 - I had to install a dependency `pip install tabulate`.
 
+### SARIMAX Validation Results (2017-2021 Train → 2022 Valid)
+| Target   |   p, d, q |       RMSE |   MAPE (%) |   Prediction |   Ground Truth |
+|:---------|----------:|-----------:|-----------:|-------------:|---------------:|
+| value_5  |       212 |  102.499   |    0.337   |   30312.7    |     30415.2    |
+| tons_5   |       212 |  532.246   |    4.89391 |   10343.4    |     10875.7    |
+| value_8  |       212 | 1814.41    |   13.6879  |   15069.9    |     13255.5    |
+| tons_8   |       212 |  357.949   |    5.11105 |    7361.38   |      7003.43   |
+| value_9  |       212 |  124.459   |    7.55831 |    1771.1    |      1646.65   |
+| tons_9   |       212 |    7.16654 |   13.8517  |      58.9043 |        51.7378 |
+| value_21 |       212 | 3440.68    |    4.91195 |   66606.4    |     70047.1    |
+| tons_21  |       212 |   62.9685  |    4.83699 |    1238.84   |      1301.81   |
+
+
 ### SARIMAX Test Results (2017-2022 Train → 2023 Test)
 
 | Target   | (p,d,q) | RMSE   | MAPE (%) | Prediction | Ground Truth |
@@ -251,4 +264,32 @@ reliably and then moving onto XGBoost's predictions for comparison.
 integration.
 
 ## Day 17 (July 22, 2025)
-- 
+- Table comparison in `./results/comparisons/sarimax_vs_xgboost.md`. Yet to add plots but will do that after database
+integration.
+- Created database `supply-chain-integration` and made an owner `freight-user`.
+- Installed `pip install psycopg2 sqlalchemy`.
+- Set up a separate password for my freight-user and then accessed the db in `./database/setup.py`.
+- Moved processed data into a schema. Choosing to not do this for the raw data because there's too many
+individual csv to cover. Will only do this for the processed data and the validation/test results.
+### Processed schema
+|   year |   value_5 |   tons_5 |   value_8 |   tons_8 |   value_9 |   tons_9 |   value_21 |   tons_21 |   population |   median_income |   retail_trade_gdp |
+|-------:|----------:|---------:|----------:|---------:|----------:|---------:|-----------:|----------:|-------------:|----------------:|-------------------:|
+|   2012 |   11166.5 |  3912.97 |   5192.35 |  2778.14 |   1473.72 |  24.3644 |    38894.7 |   402.789 |  9.90143e+06 |          0.6201 |            25886.8 |
+|   2013 |   10935.1 |  3957.42 |   4837.58 |  2707.45 |   1124.18 |  23.5562 |    27015.6 |   376.037 |  9.97248e+06 |          0.5983 |            27403.9 |
+|   2014 |   10808.1 |  3900.16 |   4912    |  2749.1  |   1092.91 |  22.9007 |    27296.2 |   379.942 |  1.00673e+07 |          0.6221 |            28584.6 |
+|   2015 |   11145.4 |  4016.58 |   4832.9  |  2704.83 |   1104.29 |  23.1388 |    27637.4 |   384.692 |  1.01784e+07 |          0.6378 |            30876.7 |
+|   2016 |   11403.5 |  4101.22 |   5232.33 |  2928.38 |   1068.85 |  22.3962 |    26276.6 |   365.75  |  1.03019e+07 |          0.6665 |            32555.2 |
+|   2017 |   26427.4 |  9524.72 |  11005.5  |  5969.3  |   2064.78 |  53.971  |    57498   |   943.353 |  1.04103e+07 |          0.7096 |            33869.1 |
+|   2018 |   29923.3 |  10795.1 |  12348.8  |  6524.38 |   1957.05 |  61.4908 |    58204.1 |  1081.71  |  1.05111e+07 |          0.6696 |            35560.5 |
+|   2019 |   30314.8 |  10911.9 |  12498.5  |  6603.47 |   1877.44 |  58.9894 |    59540.2 |  1106.54  |  1.06174e+07 |          0.6694 |            36771.7 |
+|   2020 |     30614 |    11030 |  14249.7  |  7528.69 |   1909.52 |  59.9973 |    61079   |  1135.14  |  1.07329e+07 |          0.6933 |            38498.9 |
+|   2021 |   30379.7 |  10885.7 |  14476.6  |  7648.59 |   1816.75 |  57.0824 |    64373.2 |  1196.36  |  1.07921e+07 |          0.6886 |            45540.4 |
+|   2022 |   30415.2 |  10875.7 |  13255.5  |  7003.43 |   1646.65 |  51.7378 |    70047.1 |  1301.81  |  1.09318e+07 |          0.7042 |            48679.6 |
+|   2023 |     30743 |    11009 |  12811.9  |  6769.03 |   1528.45 |  48.0239 |    72803.3 |  1353.03  |  1.10644e+07 |          0.7242 |            52847.5 |
+
+- Moved remaining 4 csv into the db: 
+`processed_data`
+`sarimax_validation_results`
+`sarimax_test_results`
+`xgb_validation_results`
+`xgb_test_results`
