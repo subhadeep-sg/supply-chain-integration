@@ -9,3 +9,6 @@ plotly~=6.1.2
 uvicorn
 jinja2
 python-multipart
+python-dotenv
+tabulate
+xgboost

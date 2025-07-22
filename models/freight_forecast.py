@@ -12,66 +12,19 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from utils.feature_engineering import apply_scaler
 from config import commodity_mapping, predictive_features, feature_units
 from utils.visualization import plot_forecast_vs_actual
+from dotenv import load_dotenv
+import logging
+import warnings
 
 
-# df = pd.read_csv('../freight_data/processed/forecast_prep.csv')
-#
-# df['Year'] = pd.to_datetime(df['Year'], format='%Y')
-# df.set_index('Year', inplace=True)
-# df.index.freq = 'YS'
-# commodity_mapping = {'5': 'Meat/seafood', '8': 'Alcoholic beverages',
-#                      '9': 'Tobacco prods.', '21': 'Pharmaceuticals'}
-#
-# x_train = df.loc['2013':'2018'].copy()
-# x_test = df.loc[['2019']].copy()
-# # x_test = pd.DataFrame(x_test, columns=df.columns)
-#
-# scaler = StandardScaler()
-# features = ['MEHOINUSGAA672N', 'GARETAILNQGSP', 'Population',
-#             'tons_5_lagged', 'tons_8_lagged', 'tons_9_lagged', 'tons_21_lagged',
-#             'value_5_lagged', 'value_8_lagged', 'value_9_lagged', 'value_21_lagged']
-# value_columns = ['value_5', 'value_8', 'value_9', 'value_21']
-# tons_columns = ['tons_5', 'tons_8', 'tons_9', 'tons_21']
-#
-#
-# # def apply_scaler(data_frame, features, mode):
-# #     shipment_features = data_frame[features]
-# #     if mode == 'train':
-# #         scaled_shipments = scaler.fit_transform(shipment_features)
-# #     elif mode == 'test':
-# #         scaled_shipments = scaler.transform(shipment_features)
-# #     scaled_shipments = pd.DataFrame(scaled_shipments, index=shipment_features.index,
-# #     columns=shipment_features.columns)
-# #     data_frame[features] = scaled_shipments[features]
-# #     return data_frame
-#
-#
-# x_train_scaled, fitted_scaler = apply_scaler(x_train, features, 'train', scaler=scaler)
-# x_test_scaled, _ = apply_scaler(x_test, features, mode='test', scaler=fitted_scaler)
-#
-# y_train = x_train_scaled['value_5']
-# y_test = x_test_scaled['value_5']
-#
-# specific_cols = ['tons_8_lagged', 'tons_9_lagged', 'tons_21_lagged',
-#                  'value_8_lagged', 'value_9_lagged', 'value_21_lagged']
-#
-# x_train_scaled = x_train_scaled.drop(columns=tons_columns + value_columns + specific_cols)
-# x_test_scaled = x_test_scaled.drop(columns=tons_columns + value_columns + specific_cols)
-#
-# arima_order = (0, 2, 3)
-# model = ARIMA(endog=y_train, exog=x_train_scaled, order=arima_order)
-# model_fit = model.fit()
-#
-# start_index = y_test.index[0]
-# end_index = y_test.index[-1]
-# predictions = model_fit.predict(start=start_index, end=end_index, exog=x_test_scaled)
-# predictions.index = y_test.index
-# print("Prediction on expected value", predictions.iloc[0])
-# print("Actual value", y_test.iloc[0])
-# print("Mean square error:", mean_squared_error(y_test, predictions))
-# print("Root mean square error:", root_mean_squared_error(y_test, predictions))
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+warnings.filterwarnings("ignore")
+logger = logging.getLogger(__name__)
+root_dir = os.getenv('project_root_dir')
 
-def sarimax_validation(train, valid, target):
+
+def sarimax_validation(train, valid, target, order=(1, 1, 1)):
     y_train = train[target]
     y_valid = valid[target]
     value_columns = [col for col in train.columns if 'value' in col]
@@ -79,27 +32,37 @@ def sarimax_validation(train, valid, target):
     train = train.drop(columns=tons_columns + value_columns)
     valid = valid.drop(columns=tons_columns + value_columns)
 
-    model = SARIMAX(endog=y_train, exog=train, order=(1, 1, 1))
+    logger.info(f'Starting SARIMAX train...')
+    model = SARIMAX(endog=y_train, exog=train, order=order)
     model_fit = model.fit(disp=0)
+    logger.debug(f'Model fit..')
+
     start_index = y_valid.index[0]
     end_index = y_valid.index[-1]
     predictions = model_fit.predict(start=start_index, end=end_index, exog=valid)
     predictions.index = y_valid.index
 
+    logger.info(f'Returning SARIMAX predictions...')
     return predictions, y_train, y_valid
 
 
-def metrics(target, prediction):
-    print("Prediction on expected value", prediction.iloc[0])
-    print("Actual value", target.iloc[0])
-    # print("Mean square error:", mean_squared_error(target, prediction))
-    print("Root mean square error:", root_mean_squared_error(target, prediction))
-    print('Mean Absolute Percentage Error (MAPE): ', np.mean(np.abs((target - prediction) / target)) * 100)
+def metrics(gt, prediction, verbose=False):
+    rmse = root_mean_squared_error(gt, prediction)
+    mape = np.mean(np.abs((gt - prediction) / gt)) * 100
+
+    if verbose:
+        print("Prediction on expected value", prediction.iloc[0])
+        print("Actual value", gt.iloc[0])
+        # print("Mean square error:", mean_squared_error(target, prediction))
+        print("Root mean square error:", root_mean_squared_error(gt, prediction))
+        print('Mean Absolute Percentage Error (MAPE): ', np.mean(np.abs((gt - prediction) / gt)) * 100)
+
+    return rmse, mape
 
 
 def forecast_validation(train, valid, target, library):
     pred, y_train, y_valid = sarimax_validation(train=train, valid=valid, target=target)
-    metrics(y_valid, pred)
+    _, _ = metrics(y_valid, pred, verbose=True)
     target = target.split('_')
 
     plot_forecast_vs_actual(y_train=y_train, y_valid=y_valid, predictions=pred,
@@ -107,9 +70,117 @@ def forecast_validation(train, valid, target, library):
                             library=library, save_path=True)
 
 
-if __name__ == '__main__':
+def grid_search_sarimax(train, y_train, valid, y_valid):
+    logger.info(f'Starting grid search on SARIMAX..')
+    possible_orders = [
+        [1, 1, 1], [0, 0, 0],
+        [0, 0, 1], [0, 1, 0],
+        [0, 1, 1], [1, 0, 1],
+        [1, 1, 0], [1, 0, 0],
+        [2, 1, 0], [2, 1, 2],
+        [1, 1, 2], [2, 1, 1]
+    ]
+
+    dataframe = pd.DataFrame()
+
+    for order in possible_orders:
+        extract_order = (order[0], order[1], order[2])
+        model = SARIMAX(endog=y_train, exog=train, order=order)
+        model = model.fit(disp=0)
+        start_index = y_valid.index[0]
+        end_index = y_valid.index[-1]
+        prediction = model.predict(start=start_index, end=end_index, exog=valid)
+
+        rmse, mape = metrics(gt=y_valid, prediction=prediction)
+        extract_order = ''.join(str(digit) for digit in extract_order)
+
+        row = pd.DataFrame(data={'order': [extract_order], 'rmse': [rmse], 'mape': [mape]})
+        dataframe = pd.concat([dataframe, row], axis=0)
+
+    dataframe = dataframe.sort_values(by=['rmse', 'mape'], ascending=True)
+    logger.debug(f'Dataframe: {dataframe.columns}, dataframe size: {len(dataframe)}')
+    logger.debug(f'Grid search validation results: \n{dataframe}')
+
+    order_string = dataframe['order'].max()
+
+    logger.debug(f'Best model order is {order_string}')
+
+    extracted_order = [int(digit) for digit in order_string]
+    extracted_order = (extracted_order[0], extracted_order[1], extracted_order[2])
+
+    logger.info(f'Returning grid search results and optimal p,d, q order...')
+    return dataframe, extracted_order, order_string
+
+
+def sarimax_train_prediction(train, y_train, x_pred, y_true, order):
+    logger.info(f'Starting SARIMAX train...')
+    model = SARIMAX(endog=y_train, exog=train, order=order)
+    model_fit = model.fit(disp=0)
+    logger.info(f'Optimal model fit..')
+
+    start_index = y_true.index[0]
+    end_index = y_true.index[-1]
+    predictions = model_fit.predict(start=start_index, end=end_index, exog=x_pred)
+    predictions.index = y_true.index
+
+    rmse, mape = metrics(gt=y_true, prediction=predictions, verbose=False)
+    logger.info(f'Returning scores and prediction...')
+    return rmse, mape, predictions
+
+
+def sarimax_model_pipeline(train, valid, target):
+    logger.info(f'Entering model pipeline for {target}..')
+    y_train = train[target]
+    y_valid = valid[target]
+    value_columns = [col for col in train.columns if 'value' in col]
+    tons_columns = [col for col in train.columns if 'tons' in col]
+    train = train.drop(columns=tons_columns + value_columns)
+    valid = valid.drop(columns=tons_columns + value_columns)
+
+    logger.info(f'Starting SARIMAX train...')
+    results, extracted_order, order_string = grid_search_sarimax(train=train, y_train=y_train, valid=valid,
+                                                                 y_valid=y_valid)
+
+    rmse, mape, pred = sarimax_train_prediction(train=train, y_train=y_train,
+                                                x_pred=valid, y_true=y_valid,
+                                                order=extracted_order)
+
+    row = pd.DataFrame(data={'target': [target], 'p, d, q': [order_string], 'rmse': [rmse], 'mape': [mape]})
+
+    logger.info(f'Returning optimal SARIMAX results and model for {target}...')
+    return row, extracted_order
+
+
+def sarimax_test_pipeline(train, test, target, model_order):
+    logger.info(f'Entering sarimax test pipeline for {target}..')
+    y_train = train[target]
+    y_test = test[target]
+    value_columns = [col for col in train.columns if 'value' in col]
+    tons_columns = [col for col in train.columns if 'tons' in col]
+    train = train.drop(columns=tons_columns + value_columns)
+    test = test.drop(columns=tons_columns + value_columns)
+
+    logger.info(f'Starting SARIMAX train...')
+    # results, extracted_order, order_string = grid_search_sarimax(train=train, y_train=y_train, valid=test, y_valid=y_test)
+
+    rmse, mape, pred = sarimax_train_prediction(train=train, y_train=y_train,
+                                                x_pred=test, y_true=y_test,
+                                                order=model_order)
+
+    row = pd.DataFrame(data={
+        'target': [target],
+        'p, d, q': [model_order],
+        'rmse': [rmse], 'mape': [mape],
+        'prediction': [pred.iloc[0]],
+        'ground_truth': [y_test.iloc[0]]
+    })
+
+    return row
+
+
+def main():
     st = time.time()
-    shipment_df = pd.read_csv('../freight_data/processed/Georga_AIS_2012-2023_minus_inflation.csv')
+    shipment_df = pd.read_csv(f'{root_dir}/freight_data/processed/Georga_AIS_2012-2023_minus_inflation.csv')
     shipment_df.rename(columns={'Unnamed: 0': 'Year'}, inplace=True)
 
     shipment_df = shipment_df[shipment_df.Year >= 2017]
@@ -119,23 +190,71 @@ if __name__ == '__main__':
 
     x_train = shipment_df.loc['2017': '2021'].copy()
     x_valid = shipment_df.loc[['2022']].copy()
-    x_test = shipment_df.loc[['2023']].copy()
-    # x_test = pd.DataFrame(x_test, columns=df.columns)
 
     # features = ['MEHOINUSGAA672N', 'GARETAILNQGSP', 'Population']
     x_train_scaled, fitted_scaler = apply_scaler(x_train, predictive_features, 'train', scaler=StandardScaler())
     x_valid_scaled, _ = apply_scaler(x_valid, predictive_features, mode='valid', scaler=fitted_scaler)
 
-    forecast_validation(x_train_scaled, x_valid_scaled, 'value_5', library='matplotlib')
-    forecast_validation(x_train_scaled, x_valid_scaled, 'tons_5', library='matplotlib')
+    # Main pipeline
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'value_5', library='matplotlib')
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'tons_5', library='matplotlib')
+    #
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'value_8', library='matplotlib')
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'tons_8', library='matplotlib')
+    #
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'value_9', library='matplotlib')
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'tons_9', library='matplotlib')
+    #
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'value_21', library='matplotlib')
+    # forecast_validation(x_train_scaled, x_valid_scaled, 'tons_21', library='matplotlib')
 
-    forecast_validation(x_train_scaled, x_valid_scaled, 'value_8', library='matplotlib')
-    forecast_validation(x_train_scaled, x_valid_scaled, 'tons_8', library='matplotlib')
+    # Trying SARIMAX improvements
 
-    forecast_validation(x_train_scaled, x_valid_scaled, 'value_9', library='matplotlib')
-    forecast_validation(x_train_scaled, x_valid_scaled, 'tons_9', library='matplotlib')
+    value_5_row, value_5_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='value_5')
+    value_8_row, value_8_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='value_8')
+    value_9_row, value_9_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='value_9')
+    value_21_row, value_21_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='value_21')
 
-    forecast_validation(x_train_scaled, x_valid_scaled, 'value_21', library='matplotlib')
-    forecast_validation(x_train_scaled, x_valid_scaled, 'tons_21', library='matplotlib')
+    tons_5_row, tons_5_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='tons_5')
+    tons_8_row, tons_8_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='tons_8')
+    tons_9_row, tons_9_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='tons_9')
+    tons_21_row, tons_21_order = sarimax_model_pipeline(train=x_train_scaled, valid=x_valid_scaled, target='tons_21')
 
-    print('Runtime:', time.time() - st)
+    validation_results = pd.concat([value_5_row, tons_5_row, value_8_row, tons_8_row, value_9_row, tons_9_row,
+                                    value_21_row, tons_21_row], axis=0)
+    logger.debug(f'Validation results: \n{validation_results}')
+
+    os.makedirs(f'{root_dir}/results/sarimax', exist_ok=True)
+    validation_results.to_csv(f'{root_dir}/results/sarimax/sarimax_validation.csv', index=False)
+    logger.info(f'Validation scores saved in ./results/sarimax/sarimax_validation.csv')
+
+    x_train = shipment_df.loc['2017': '2022'].copy()
+    x_test = shipment_df.loc[['2023']].copy()
+    x_train_scaled, fitted_scaler = apply_scaler(x_train, predictive_features, 'train', scaler=StandardScaler())
+    x_test_scaled, _ = apply_scaler(x_test, predictive_features, mode='test', scaler=fitted_scaler)
+
+    value_5_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='value_5', model_order=value_5_order)
+    value_8_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='value_8', model_order=value_8_order)
+    value_9_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='value_9', model_order=value_9_order)
+    value_21_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='value_21',
+                                         model_order=value_21_order)
+
+    tons_5_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='tons_5', model_order=tons_5_order)
+    tons_8_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='tons_8', model_order=tons_8_order)
+    tons_9_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='tons_9', model_order=tons_9_order)
+    tons_21_row = sarimax_test_pipeline(train=x_train_scaled, test=x_test, target='tons_21', model_order=tons_21_order)
+
+    test_results = pd.concat([value_5_row, tons_5_row, value_8_row, tons_8_row, value_9_row, tons_9_row,
+                              value_21_row, tons_21_row], axis=0)
+
+    logger.debug(f'Test results: \n{test_results}')
+    test_results.to_csv(f'{root_dir}/results/sarimax/sarimax_test.csv', index=False)
+    logger.info(f'Test scores saved in ./results/sarimax/sarimax_test.csv')
+
+    # print(test_results.to_markdown(index=False))
+
+    logger.info(f'Runtime: {time.time() - st}')
+
+
+if __name__ == '__main__':
+    main()

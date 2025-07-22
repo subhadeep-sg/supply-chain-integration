@@ -24,6 +24,8 @@ freight_data/metadata/
 # Keep README in freight_data
 !freight_data/README.md
 
+.env
+
 # Ignore test outputs or logs
 *.log
 *.tmp

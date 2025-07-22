@@ -43,7 +43,7 @@
 - Require [GDP Implicit Price Deflator](https://fred.stlouisfed.org/series/A191RD3A086NBEA#) data for 2017 base data. Will be using 2017 base dollar value for the overall dataset (future years are estimations from 2017).
 - To convert constant dollar values from one base year to another, you can use the following formula:
 
-    ![Equation](figures/deflation_conversion.svg)
+    ![Equation](../figures/deflation_conversion.svg)
 
 - Obtained a cleaned csv with adjusted value for 2017 base. There is however a big gap between estimated 2016 value and base 2017 value.
 **Tomorrow:** Visualizations and analysis on the cleaned data.
@@ -71,7 +71,7 @@ plan is to do a rolling validation.
 ## Day 10 (June 20, 2025)
 - The gap between the FAF4 and FAF5 estimates for the same year.
 
-    <img src="figures/faf4_faf5_comparisons.png" width="600">
+    <img src="../figures/faf4_faf5_comparisons.png" width="600">
 
 - Prepared functions for generating trends of value by commodity and adding more years for better visual clarity.
 - Writing these functions as utils into ``visualization.py``.
@@ -79,12 +79,12 @@ plan is to do a rolling validation.
 - Changed the folder structure to make it cleaner and more readable. Added the project structure to the README.
 
 ### Visualizations
-| Commodity Code | Shipment Value by Commodity                                    |
-|----------------|----------------------------------------------------------------|
-| 5              | <img src="figures/faf4_5_comparison_value_5.png" width="400">  |
-| 8              | <img src="figures/faf4_5_comparison_value_8.png" width="400">  |
-| 9              | <img src="figures/faf4_5_comparison_value_9.png" width="400">  |
-| 21             | <img src="figures/faf4_5_comparison_value_21.png" width="400"> |
+| Commodity Code | Shipment Value by Commodity                                      |
+|----------------|------------------------------------------------------------------|
+| 5              | <img src="../figures/faf4_5_comparison_value_5.png" width="400"> |
+| 8              | <img src="../figures/faf4_5_comparison_value_8.png" width="400"> |
+| 9              | <img src="../figures/faf4_5_comparison_value_9.png" width="400">    |
+| 21             | <img src="../figures/faf4_5_comparison_value_21.png" width="400">   |
 
 ## Day 11 (June 21, 2025)
 - I wanted to go back and check whether I should have applied the GDP Implicit Price Deflator.
@@ -93,10 +93,10 @@ plan is to do a rolling validation.
 
 | Commodity Code | Shipment Tons by Commodity                                    |
 |----------------|---------------------------------------------------------------|
-| 5              | <img src="figures/faf4_5_comparison_tons_5.png" width="400">  |
-| 8              | <img src="figures/faf4_5_comparison_tons_8.png" width="400">  |
-| 9              | <img src="figures/faf4_5_comparison_tons_9.png" width="400">  |
-| 21             | <img src="figures/faf4_5_comparison_tons_21.png" width="400"> |
+| 5              | <img src="../figures/faf4_5_comparison_tons_5.png" width="400">  |
+| 8              | <img src="../figures/faf4_5_comparison_tons_8.png" width="400">  |
+| 9              | <img src="../figures/faf4_5_comparison_tons_9.png" width="400">  |
+| 21             | <img src="../figures/faf4_5_comparison_tons_21.png" width="400"> |
 
 - Will move on and try to apply forecasting/trend analysis over 2017-2023 data instead to avoid the gap.
 - Build the integration pipeline before coming back to address this issue.
@@ -110,19 +110,19 @@ plan is to do a rolling validation.
 
 #### Validation of trained SARIMAX (2017-2021) on 2022.
 
-| Commodity Code          | Forecasting Value for Commodity                       |
-|-------------------------|-------------------------------------------------------|
-| 5 (Meat/Seafood)        | <img src="results/forecast_value_5.png" width="400">  |
-| 8 (Alcoholic beverages) | <img src="results/forecast_value_8.png" width="400">  |
-| 9 (Tobacco prods.)      | <img src="results/forecast_value_9.png" width="400">  |
-| 21  (Pharmaceuticals)   | <img src="results/forecast_value_21.png" width="400"> |
+| Commodity Code          | Forecasting Value for Commodity                         |
+|-------------------------|---------------------------------------------------------|
+| 5 (Meat/Seafood)        | <img src="../results/forecast_value_5.png" width="400"> |
+| 8 (Alcoholic beverages) | <img src="../results/forecast_value_8.png" width="400">    |
+| 9 (Tobacco prods.)      | <img src="../results/forecast_value_9.png" width="400">    |
+| 21  (Pharmaceuticals)   | <img src="../results/forecast_value_21.png" width="400">   |
 
 | Commodity Code          | Forecasting Tons for Commodity                       |
 |-------------------------|------------------------------------------------------|
-| 5 (Meat/Seafood)        | <img src="results/forecast_tons_5.png" width="400">  |
-| 8 (Alcoholic beverages) | <img src="results/forecast_tons_8.png" width="400">  |
-| 9 (Tobacco prods.)      | <img src="results/forecast_tons_9.png" width="400">  |
-| 21 (Pharmaceuticals)    | <img src="results/forecast_tons_21.png" width="400"> |
+| 5 (Meat/Seafood)        | <img src="../results/forecast_tons_5.png" width="400">  |
+| 8 (Alcoholic beverages) | <img src="../results/forecast_tons_8.png" width="400">  |
+| 9 (Tobacco prods.)      | <img src="../results/forecast_tons_9.png" width="400">  |
+| 21 (Pharmaceuticals)    | <img src="../results/forecast_tons_21.png" width="400"> |
 
 **Tomorrow:** Will start with integration - set up FastAPI project structure.
 
@@ -167,3 +167,88 @@ With this I think the basic project is working.
 - I've just realized there is another thing I've missed about the forecast prediction. So the dataset is working with 2017
 Dollar value so any prediction will be adjusted to that year, so giving the output for 2022 will involve a conversion
 to display on the user's end.
+
+## Day 15 (July 20, 2025)
+- Okay so starting today, the goal is to examine the current SARIMAX model and see if I can add improvements,
+and look at exploring what other models I could potentially set up for.
+- Adding grid search on p, d, q parameters of SARIMAX.
+```
+possible_orders = [
+        [1, 1, 1], [0, 0, 0],
+        [0, 0, 1], [0, 1, 0],
+        [0, 1, 1], [1, 0, 1],
+        [1, 1, 0], [1, 0, 0],
+        [2, 1, 0], [2, 1, 2],
+        [1, 1, 2], [2, 1, 1]
+    ]
+```
+- Ok the basic pipeline worked, and now I have the optimal model giving me a result in validation, next step is to
+find this optimal order based model for each of the commodities and give it's predictions and storing them
+reliably and then moving onto XGBoost's predictions for comparison.
+
+## Day 16 (July 21, 2025)
+- Looking to make a table to store all results for all commodity and targets.
+- Learned today about using df.to_markdown as a way to easily make a copy-paste-able markdown version of the table.
+- I had to install a dependency `pip install tabulate`.
+
+### SARIMAX Test Results (2017-2022 Train → 2023 Test)
+
+| Target   | (p,d,q) | RMSE   | MAPE (%) | Prediction | Ground Truth |
+|:---------|:----------|------------:|----------:|-------------:|---------------:|
+| value_5  | (2, 1, 2) |  240.962    |  0.783796 |   30502      |     30743      |
+| tons_5   | (2, 1, 2) |  134.418    |  1.22098  |   10874.6    |     11009      |
+| value_8  | (2, 1, 2) | 1528.34     | 11.9291   |   14340.2    |     12811.9    |
+| tons_8   | (2, 1, 2) |  693.276    | 10.2419   |    7462.3    |      6769.03   |
+| value_9  | (2, 1, 2) |  105.605    |  6.9093   |    1634.05   |      1528.45   |
+| tons_9   | (2, 1, 2) |    0.809503 |  1.68562  |      47.2144 |        48.0239 |
+| value_21 | (2, 1, 2) | 2785.08     |  3.82549  |   75588.4    |     72803.3    |
+| tons_21  | (2, 1, 2) |   98.2609   |  7.26226  |    1254.77   |      1353.03   |
+
+- Now working on the `xgboost_forecast.py` script to add the same predictions but with XGBoost for comparison.
+- For now just checking basic XGBRegressor() working, and then will try some grid search (maybe).
+
+### XGBoost Validation (2017-2021 Train → 2022 Valid)
+| Target   |    RMSE |   MAPE (%) |   Prediction |   Ground Truth |
+|:---------|--------:|-----------:|-------------:|---------------:|
+| value_5  | 14.1    |   0.653656 |   30614      |     30415.2    |
+| tons_5   | 12.423  |   1.41905  |   11030      |     10875.7    |
+| value_8  | 31.5312 |   7.50038  |   14249.8    |     13255.5    |
+| tons_8   | 22.9195 |   7.50068  |    7528.74   |      7003.43   |
+| value_9  | 13.9237 |  11.7736   |    1840.52   |      1646.65   |
+| tons_9   |  2.3123 |  10.3343   |      57.0845 |        51.7378 |
+| value_21 | 94.7    |  12.803    |   61079      |     70047.1    |
+| tons_21  | 10.2689 |   8.10032  |    1196.36   |      1301.81   |
+
+- Now I've applied a small amount of grid-search.
+- Also learned about using product from itertools to do efficient grid search parameter unpacking.
+### XGBoost Grid-Search Optimized Validation (2017-2021 Train → 2022 Valid)
+| Target   |     RMSE |   MAPE (%) |   Prediction |   Ground Truth |
+|:---------|---------:|-----------:|-------------:|---------------:|
+| value_5  |  4.3427  |  0.0620052 |   30396.3    |     30415.2    |
+| tons_5   |  3.42065 |  0.107587  |   10864      |     10875.7    |
+| value_8  |  8.18723 |  0.505681  |   13322.6    |     13255.5    |
+| tons_8   |  7.66601 |  0.839128  |    7062.2    |      7003.43   |
+| value_9  | 13.7613  | 11.5005    |    1836.02   |      1646.65   |
+| tons_9   |  2.30211 | 10.2434    |      57.0375 |        51.7378 |
+| value_21 | 81.2385  |  9.4218    |   63447.4    |     70047.1    |
+| tons_21  | 10.2692  |  8.10082   |    1196.35   |      1301.81   |
+
+- Now moving to testing.
+
+### XGBoost Test Results (2017-2022 Train → 2023 Test)
+| Target   |    RMSE |   MAPE (%) |   Prediction |   Ground Truth | Test Params                                                                     |
+|:---------|--------:|-----------:|-------------:|---------------:|:--------------------------------------------------------------------------------|
+| value_5  | 58.0121 |   10.9469  |    27377.6   |     30743      | {'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.2, 'subsample': 0.8}    |
+| tons_5   | 31.9332 |    9.26263 |     9989.31  |     11009      | {'n_estimators': 150, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 1.0} |
+| value_8  | 17.3631 |    2.35311 |    13113.3   |     12811.9    | {'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 0.8}  |
+| tons_8   | 13.3444 |    2.63069 |     6947.1   |      6769.03   | {'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 0.8}  |
+| value_9  | 10.8732 |    7.73511 |     1646.67  |      1528.45   | {'n_estimators': 250, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 0.8}   |
+| tons_9   |  2.39   |   11.8942  |       53.736 |        48.0239 | {'n_estimators': 50, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 0.8}    |
+| value_21 | 52.5279 |    3.78991 |    70044.1   |     72803.3    | {'n_estimators': 100, 'max_depth': 4, 'learning_rate': 0.2, 'subsample': 0.8}   |
+| tons_21  |  7.1571 |    3.78587 |     1301.81  |      1353.03   | {'n_estimators': 120, 'max_depth': 4, 'learning_rate': 0.2, 'subsample': 1.0}   |
+
+- Goal for tomorrow is to put these results side by side for a table comparison and then add PostgreSQL
+integration.
+
+## Day 17 (July 22, 2025)
+- 

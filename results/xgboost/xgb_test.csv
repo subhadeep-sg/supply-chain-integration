@@ -1,0 +1,9 @@
+Target,RMSE,MAPE (%),Prediction,Ground Truth,Test Params
+value_5,58.01212401838946,10.946904062512756,[27377.592],30742.99833,"{'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.2, 'subsample': 0.8}"
+tons_5,31.93315148771726,9.262632535442055,[9989.306],11009.031828,"{'n_estimators': 150, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 1.0}"
+value_8,17.363096505231997,2.353107763639047,[13113.348],12811.870536,"{'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 0.8}"
+tons_8,13.344376363519205,2.630694382614113,[6947.098],6769.025764,"{'n_estimators': 50, 'max_depth': 2, 'learning_rate': 0.012, 'subsample': 0.8}"
+value_9,10.873226294650886,7.735111303399483,[1646.6737],1528.446656,"{'n_estimators': 250, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 0.8}"
+tons_9,2.3899963633745056,11.894248287391207,[53.73599],48.023906,"{'n_estimators': 50, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 0.8}"
+value_21,52.52787213946511,3.7899080819688304,[70044.1],72803.278914,"{'n_estimators': 100, 'max_depth': 4, 'learning_rate': 0.2, 'subsample': 0.8}"
+tons_21,7.157101042736339,3.785868269898699,[1301.8102],1353.034276,"{'n_estimators': 120, 'max_depth': 4, 'learning_rate': 0.2, 'subsample': 1.0}"
